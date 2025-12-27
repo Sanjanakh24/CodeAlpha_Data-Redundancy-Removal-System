@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 import sqlite3
 
@@ -5,6 +6,24 @@ app = Flask(__name__)
 
 def get_db():
     return sqlite3.connect("data.db")
+
+def init_db():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT UNIQUE,
+            phone TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Initialize DB at startup (CRITICAL for Render Free)
+if not os.path.exists("data.db"):
+    init_db()
 
 @app.route("/")
 def home():
@@ -19,15 +38,6 @@ def add_user():
 
     conn = get_db()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT UNIQUE,
-        phone TEXT
-    )
-    """)
 
     try:
         cursor.execute(
